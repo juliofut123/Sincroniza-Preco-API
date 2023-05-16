@@ -5,21 +5,20 @@ import urllib.parse
 
 #Diretorio arquivo de dados e XML
 dirDados = "C:\\Bancamais\\Fastcommerce\\DadosLoja"
-textoxml = open("C:\\Users\\Usefr\\Desktop\\Integração[Bmais - FC ]\\Sincroniza-Preço\\output.xml","r")
 
 #Administração do arquivo .cfg
 config_object = ConfigParser()
 config_object.read(f"{dirDados}\\StoreData.cfg")
 STOREINFO = config_object["STOREINFO"]
-
 StoreName = STOREINFO["StoreName"]
 StoreID = STOREINFO["StoreID"]
 Username = STOREINFO["Username"]
 password = STOREINFO["password"]
 
 #Armazena na variavel file1 o conteúdo do arquivo estoqueB+.txt
-with open("C:\\Users\\Usefr\\Desktop\\Integração[Bmais - FC ]\\Sincroniza-Preço\\Input1B+.txt") as t1:
+with open("C:\\Bancamais\\Fastcommerce\\ProgramasExtras\\Sincronizações\\Sincroniza-Preço\\syncPreco.txt") as t1:
     file1 = t1.readlines()
+    t1.close()
 
 #Cria um dicionário que armazena como keys as ids e como value as quantidades do arquivo Input1B+.txt
 dict1 = {}
@@ -37,13 +36,9 @@ for key, value in dict1.items():
     change_flag_prod_api = ET.SubElement(record, "Field", {"Name": "ChangeFlagProdAPI", "Value": "0"})
 
 xml_doc = ET.tostring(root, encoding="utf-8")
-with open("C:\\Users\\Usefr\\Desktop\\Integração[Bmais - FC ]\\Sincroniza-Preço\\output.xml", "wb") as f:
-    f.write(xml_doc)
 
 #Codificar XML para a URL
-str = textoxml.read()
-new = urllib.parse.quote(str)
-xmlrecord = new
+xmlrecord = urllib.parse.quote(xml_doc)
 
 #Request
 url = "https://www.rumo.com.br/sistema/adm/APILogon.asp"
@@ -52,3 +47,13 @@ payload= (f"""StoreName={StoreName}&StoreID={StoreID}&Username={Username}&
 headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
 response = requests.request("POST", url, headers=headers, data=payload)
+
+resposta = response.text
+
+
+if (response.text.find("<ErrCod>0")) == -1:
+    with open("C:\\Bancamais\\Fastcommerce\\ProgramasExtras\\Sincronizações\\Sincroniza-Preço\\Erro.txt", "w+") as e:
+        e.write("Houve um erro ao checar os IDs.")
+        e.write("\n")
+        e.write(response.text)
+        e.close()
